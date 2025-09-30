@@ -281,7 +281,7 @@
         </div>
         
         <footer>
-            <p>Développé avec ❤ pour protéger votre vie privée | CryptoVault v1.0</p>
+            <p>Développé avec ❤️ pour protéger votre vie privée | CryptoVault v1.0</p>
         </footer>
     </div>
 
