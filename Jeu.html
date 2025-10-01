@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumberGuess - Jeu de Devinette</title>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --secondary: #9b59b6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: var(--light);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: var(--light);
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .info-item {
+            flex: 1;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        .game-area {
+            margin: 25px 0;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #e67e22;
+        }
+        
+        .message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message.info {
+            background: rgba(52, 152, 219, 0.3);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .message.success {
+            background: rgba(46, 204, 113, 0.3);
+            border-left: 4px solid var(--success);
+        }
+        
+        .message.warning {
+            background: rgba(243, 156, 18, 0.3);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .message.danger {
+            background: rgba(231, 76, 60, 0.3);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .attempts-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .attempt-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .difficulty-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .difficulty-btn.active {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.2);
+        }
+        
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* Animation pour les bonnes réponses */
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .celebrate {
+            animation: celebrate 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🎯 NumberGuess</h1>
+            <p class="subtitle">Devine le nombre mystère !</p>
+        </header>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-difficulty="easy">Facile (1-50)</button>
+            <button class="difficulty-btn" data-difficulty="medium">Moyen (1-100)</button>
+            <button class="difficulty-btn" data-difficulty="hard">Difficile (1-200)</button>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-item">
+                <div>Score</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+            <div class="info-item">
+                <div>Tentatives</div>
+                <div class="info-value" id="attempts">0</div>
+            </div>
+            <div class="info-item">
+                <div>Record</div>
+                <div class="info-value" id="best-score">0</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="input-group">
+                <input type="number" id="guess-input" placeholder="Entre ton chiffre..." min="1" max="100">
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" id="guess-btn">Deviner !</button>
+                <button class="btn btn-secondary" id="hint-btn">Indice (-5 pts)</button>
+            </div>
+        </div>
+        
+        <div class="message info" id="message">
+            Entre un nombre entre 1 et 100 pour commencer !
+        </div>
+        
+        <div class="attempts-list" id="attempts-list">
+            <!-- Les tentatives s'afficheront ici -->
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn btn-secondary" id="restart-btn">Nouvelle Partie</button>
+        </div>
+    </div>
+
+    <script>
+        class NumberGuessGame {
+            constructor() {
+                this.minNumber = 1;
+                this.maxNumber = 100;
+                this.secretNumber = 0;
+                this.attempts = 0;
+                this.score = 0;
+                this.bestScore = localStorage.getItem('bestScore') || 0;
+                this.gameActive = false;
+                this.difficulty = 'medium';
+                
+                this.initializeElements();
+                this.setDifficulty('medium');
+                this.updateDisplay();
+            }
+            
+            initializeElements() {
+                // Éléments DOM
+                this.guessInput = document.getElementById('guess-input');
+                this.guessBtn = document.getElementById('guess-btn');
+                this.hintBtn = document.getElementById('hint-btn');
+                this.restartBtn = document.getElementById('restart-btn');
+                this.messageEl = document.getElementById('message');
+                this.scoreEl = document.getElementById('score');
+                this.attemptsEl = document.getElementById('attempts');
+                this.bestScoreEl = document.getElementById('best-score');
+                this.attemptsList = document.getElementById('attempts-list');
+                this.difficultyBtns = document.querySelectorAll('.difficulty-btn');
+                
+                // Événements
+                this.guessBtn.addEventListener('click', () => this.makeGuess());
+                this.hintBtn.addEventListener('click', () => this.giveHint());
+                this.restartBtn.addEventListener('click', () => this.restartGame());
+                this.guessInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.makeGuess();
+                });
+                
+                // Événements difficulté
+                this.difficultyBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setDifficulty(e.target.dataset.difficulty);
+                    });
+                });
+            }
+            
+            setDifficulty(level) {
+                this.difficulty = level;
+                this.difficultyBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-difficulty="${level}"]`).classList.add('active');
+                
+                switch(level) {
+                    case 'easy':
+                        this.minNumber = 1;
+                        this.maxNumber = 50;
+                        break;
+                    case 'medium':
+                        this.minNumber = 1;
+                        this.maxNumber = 100;
+                        break;
+                    case 'hard':
+                        this.minNumber = 1;
+                        this.maxNumber = 200;
+                        break;
+                }
+                
+                this.restartGame();
+            }
+            
+            startNewGame() {
+                this.secretNumber = Math.floor(Math.random() * (this.maxNumber - this.minNumber + 1)) + this.minNumber;
+                this.attempts = 0;
+                this.gameActive = true;
+                this.attemptsList.innerHTML = '';
+                this.updateMessage(`Devine un nombre entre ${this.minNumber} et ${this.maxNumber}`, 'info');
+                this.guessInput.focus();
+            }
+            
+            makeGuess() {
+                if (!this.gameActive) {
+                    this.updateMessage('Clique sur "Nouvelle Partie" pour commencer !', 'warning');
+                    return;
+                }
+                
+                const guess = parseInt(this.guessInput.value);
+                
+                if (isNaN(guess) || guess < this.minNumber || guess > this.maxNumber) {
+                    this.updateMessage(`Entre un nombre valide entre ${this.minNumber} et ${this.maxNumber}`, 'warning');
+                    return;
+                }
+                
+                this.attempts++;
+                this.addAttemptToList(guess);
+                
+                if (guess === this.secretNumber) {
+                    this.handleWin();
+                } else if (guess < this.secretNumber) {
+                    this.updateMessage(`📈 Plus grand que ${guess} !`, 'warning');
+                } else {
+                    this.updateMessage(`📉 Plus petit que ${guess} !`, 'warning');
+                }
+                
+                this.guessInput.value = '';
+                this.updateDisplay();
+            }
+            
+            handleWin() {
+                const points = this.calculatePoints();
+                this.score += points;
+                
+                if (this.score > this.bestScore) {
+                    this.bestScore = this.score;
+                    localStorage.setItem('bestScore', this.bestScore);
+                }
+                
+                this.updateMessage(
+                    `🎉 FÉLICITATIONS ! Tu as trouvé ${this.secretNumber} en ${this.attempts} tentatives ! (+${points} points)`,
+                    'success'
+                );
+                
+                this.messageEl.classList.add('celebrate');
+                setTimeout(() => this.messageEl.classList.remove('celebrate'), 500);
+                
+                this.gameActive = false;
+                this.updateDisplay();
+            }
+            
+            calculatePoints() {
+                const maxPoints = 100;
+                const difficultyMultiplier = {
+                    'easy': 0.5,
+                    'medium': 1,
+                    'hard': 2
+                };
+                
+                const basePoints = Math.max(10, maxPoints - this.attempts * 2);
+                return Math.floor(basePoints * difficultyMultiplier[this.difficulty]);
+            }
+            
+            giveHint() {
+                if (!this.gameActive || this.score < 5) {
+                    this.updateMessage('Pas assez de points pour un indice !', 'warning');
+                    return;
+                }
+                
+                this.score -= 5;
+                const range = Math.floor((this.maxNumber - this.minNumber) * 0.3);
+                const hintMin = Math.max(this.minNumber, this.secretNumber - range);
+                const hintMax = Math.min(this.maxNumber, this.secretNumber + range);
+                
+                this.updateMessage(
+                    `💡 INDICE : Le nombre est entre ${hintMin} et ${hintMax} (-5 points)`,
+                    'info'
+                );
+                this.updateDisplay();
+            }
+            
+            addAttemptToList(guess) {
+                const attemptItem = document.createElement('div');
+                attemptItem.className = 'attempt-item';
+                
+                const comparison = guess === this.secretNumber ? '🎯 EXACT' :
+                                 guess < this.secretNumber ? '📈 Trop petit' : '📉 Trop grand';
+                
+                attemptItem.innerHTML = `
+                    <span>Tentative ${this.attempts}: <strong>${guess}</strong></span>
+                    <span>${comparison}</span>
+                `;
+                
+                this.attemptsList.prepend(attemptItem);
+            }
+            
+            updateMessage(text, type = 'info') {
+                this.messageEl.textContent = text;
+                this.messageEl.className = `message ${type}`;
+            }
+            
+            updateDisplay() {
+                this.scoreEl.textContent = this.score;
+                this.attemptsEl.textContent = this.attempts;
+                this.bestScoreEl.textContent = this.bestScore;
+            }
+            
+            restartGame() {
+                this.startNewGame();
+                this.updateDisplay();
+            }
+        }
+        
+        // Démarrer le jeu quand la page est chargée
+        document.addEventListener('DOMContentLoaded', () => {
+            new NumberGuessGame();
+        });
+    </script>
+</body>
+</html>
